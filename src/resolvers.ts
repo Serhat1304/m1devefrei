@@ -51,27 +51,32 @@ export const resolvers: Resolvers = {
       }
       return getClosestColor(color, ["#FF5733", "#33FF57", "#3357FF"]);
     },
+
     films: async () => {
-      const filmsData = await fetchFilmsData();
-    
-      // Pour chaque film
-      for (const film of filmsData) {
-        // On récupère les détails des personnes associées à ce film
-        const peopleDetails = [];
-    
-        // Pour chaque URL de personne dans le film
-        for (const personUrl of film.people) {
-          const personResponse = await fetch(personUrl);
-          const personData = await personResponse.json();
-          peopleDetails.push(personData);
-        }
-    
-        // Remplace les URL des personnes par les détails des personnes
-        film.people = peopleDetails;
-      }
-    
-      return filmsData;
-    },
+  const filmsData = await fetchFilmsData(); // Supposons que cette fonction récupère les données des films de l'API
+  const filmsWithPeople = [];
+
+  // Pour chaque film
+  for (const film of filmsData) {
+    const people = [];
+
+    // Filtrer les URLs valides contenant des UUIDs
+    const validPeopleUrls = film.people.filter(personUrl => /\/people\/[0-9a-fA-F\-]+$/.test(personUrl));
+
+    // Récupère les détails de chaque personne associée au film
+    for (const personUrl of validPeopleUrls) {
+      const personResponse = await fetch(personUrl);
+      const personData = await personResponse.json();
+      people.push({ ...personData, filmId: film.id });
+    }
+
+    // Ajoute les détails des personnes associées au film
+    filmsWithPeople.push({ ...film, people });
+  }
+
+  return filmsWithPeople;
+},
+
     people: async () => {
       const peopleData = await fetchPeopleData();
       const peopleWithFilms = [];
