@@ -19,6 +19,19 @@ export const typeDefs = gql`
     thumbnail: String
   }
 
+  type Film {
+    id: ID!
+    title: String!
+    people: [People]
+  }
+
+  type People {
+    id: ID!
+    name: String
+    eye_color: String
+    films: [Film]
+  }
+
   type Author {
     id: ID!
     name: String!
@@ -31,7 +44,8 @@ export const typeDefs = gql`
     divide(number1: Int!, number2: Int!): Float!
     multiply(number1: Int!, number2: Int!): Float!
     closestColor(color: String!): String!
-    getTracks: [Track!]!
+    films: [Film!]!
+    people: [People!]!
   }
  
   enum Speciality {

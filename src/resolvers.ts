@@ -1,8 +1,8 @@
 import { GraphQLError } from "graphql";
 import { getClosestColor } from "./colors.js";
-import { Resolvers, Speciality } from "./types.js";
+import {Resolvers, Speciality} from "./types.js";
+import fetch from 'node-fetch';
 
- 
 const doctorsData = [
   {
     id: '1',
@@ -23,46 +23,94 @@ const doctorsData = [
 export const resolvers: Resolvers = {
   Query: {
     doctors: (parent, args, context, info) => {
-      const {specialities} = args
-      return doctorsData.filter(doctor => specialities.includes(doctor.speciality))
+      const { specialities } = args;
+      if (specialities && specialities.length > 0) {
+        return doctorsData.filter(doctor => specialities.includes(doctor.speciality));
+      }
+      return doctorsData;
     },
     doctor: (parent, args, context, info) => {
-      const id = args.id
-      return doctorsData.find(d => d.id === id)
+      const id = args.id;
+      return doctorsData.find(d => d.id === id);
     },
     divide: (parent, args, context, info) => {
-      const {number1, number2} = args
+      const { number1, number2 } = args;
       if (number2 === 0) {
-        throw new GraphQLError('cannot divide by 0')
+        throw new GraphQLError('cannot divide by 0');
       }
-      return number1 / number2
+      return number1 / number2;
     },
     multiply: (parent, args, context, info) => {
-      const {number1, number2} = args
-      return number1 * number2
+      const { number1, number2 } = args;
+      return number1 * number2;
     },
     closestColor: (parent, args, context, info) => {
-      const {color} = args
+      const { color } = args;
       if (!(color.match(/^#[0-9a-fA-F]{6}/))) {
-        throw new GraphQLError('color pattern does not match')
+        throw new GraphQLError('color pattern does not match');
       }
-      return getClosestColor(color, ["#FF5733", "#33FF57", "#3357FF"])
+      return getClosestColor(color, ["#FF5733", "#33FF57", "#3357FF"]);
     },
-    getTracks: (parent, args, context, info) => {
-      return context.dataSources.trackApi.getTracks()
+    films: async () => {
+      const filmsData = await fetchFilmsData();
+    
+      // Pour chaque film
+      for (const film of filmsData) {
+        // On récupère les détails des personnes associées à ce film
+        const peopleDetails = [];
+    
+        // Pour chaque URL de personne dans le film
+        for (const personUrl of film.people) {
+          const personResponse = await fetch(personUrl);
+          const personData = await personResponse.json();
+          peopleDetails.push(personData);
+        }
+    
+        // Remplace les URL des personnes par les détails des personnes
+        film.people = peopleDetails;
+      }
+    
+      return filmsData;
+    },
+    people: async () => {
+      const peopleData = await fetchPeopleData();
+      const peopleWithFilms = [];
+    
+      // Pour chaque chaque personne
+      for (const person of peopleData) {
+        const films = [];
+    
+        // Récupère les détails de chaque film associé à la personne
+        for (const filmUrl of person.films) {
+          const filmResponse = await fetch(filmUrl);
+          const filmData = await filmResponse.json();
+          films.push({ ...filmData, personId: person.id });
+        }
+    
+        // Ajoute les détails des films à la personne
+        peopleWithFilms.push({ ...person, films });
+      }
+    
+      return peopleWithFilms;
     }
+    
   },
 
-  Track: {
-    author: ({authorId}, args, context, info) => {
-      return context.dataSources.trackApi.getAuthorBy(authorId)
-    }
-  },
   Doctor: {
     addresses: (parent, args, context, info) => {
-      return [{
-        zipCode: `${parent.id}000`
-      }]
+      return [{ zipCode: `${parent.id}000` }];
     }
   }
- };
+};
+
+async function fetchPeopleData() {
+  const response = await fetch('https://ghibliapi.dev/people');
+  const data = await response.json();
+  return data;
+}
+
+async function fetchFilmsData() {
+  const response = await fetch('https://ghibliapi.dev/films');
+  const data = await response.json();
+  return data;
+}

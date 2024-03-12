@@ -1,7 +1,7 @@
-import { TrackAPI } from "./datasources/TrackAPI"
+import { GhibliAPI } from "./datasources/GhibliApi"
 
 export type DataSourceContext = {
   dataSources: {
-    trackApi: TrackAPI
+    ghibliAPI: GhibliAPI
   }
 }
