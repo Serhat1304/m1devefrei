@@ -60,7 +60,7 @@ export const resolvers: Resolvers = {
   for (const film of filmsData) {
     const people = [];
 
-    // Filtrer les URLs valides contenant des UUIDs
+    // Filtre les URLs valides contenant des UUIDs
     const validPeopleUrls = film.people.filter(personUrl => /\/people\/[0-9a-fA-F\-]+$/.test(personUrl));
 
     // Récupère les détails de chaque personne associée au film
